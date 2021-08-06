@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -185,35 +186,36 @@ func StaticServer(w http.ResponseWriter, req *http.Request) {
 //
 //	return fmt.Sprintf("%x:%x", sh.Sum(nil), md.Sum(nil))
 //}
-//
-//func serveAuthPage(info map[string]string, w http.ResponseWriter) {
-//	authTpl.Execute(w, info)
-//}
-//
-//func getAuthUserInfo(cookies []*http.Cookie) map[string]string {
-//	for _, cook := range cookies {
-//		if cook.Name == "id" && cook.Value != "" {
-//			info, err := getSessionInfo(cook.Value)
-//			if err == nil {
-//				return info
-//			} else {
-//				fmt.Println("Error: " + err.Error())
-//			}
-//		}
-//	}
-//
-//	return nil
-//}
-//
-//func IndexHandler(w http.ResponseWriter, req *http.Request) {
-//	// validate session
-//	if info := getAuthUserInfo(req.Cookies()); info != nil {
-//		serveAuthPage(info, w)
-//		return
-//	}
-//
-//	serveStatic("static/index.html", w)
-//}
+
+func serveAuthPage(info map[string]string, w http.ResponseWriter) {
+	authTpl.Execute(w, info)
+}
+
+func getAuthUserInfo(cookies []*http.Cookie) map[string]string {
+	for _, cook := range cookies {
+		if cook.Name == "id" && cook.Value != "" {
+			info, err := getSessionInfo(cook.Value)
+			if err == nil {
+				return info
+			} else {
+				fmt.Println("Error: " + err.Error())
+			}
+		}
+	}
+
+	return nil
+}
+
+func IndexHandler(w http.ResponseWriter, req *http.Request) {
+	// validate session
+	if info := getAuthUserInfo(req.Cookies()); info != nil {
+		serveAuthPage(info, w)
+		return
+	}
+
+	serveStatic("static/index.html", w)
+}
+
 //
 //func EventsDispatcher() {
 //	listenerMap := make(map[chan interface{}]map[string]string)
@@ -382,11 +384,11 @@ func StaticServer(w http.ResponseWriter, req *http.Request) {
 //		}
 //	}
 //}
-//
-//func init() {
-//	initSession()
-//}
-//
+
+func init() {
+	initSession()
+}
+
 //func initStmts(db *sql.DB) {
 //	var err error
 //
@@ -429,7 +431,7 @@ func main() {
 	http.HandleFunc("/static/", StaticServer)
 	//http.HandleFunc("/login", LoginHandler)
 	//http.HandleFunc("/logout", LogoutHandler)
-	//http.HandleFunc("/", IndexHandler)
+	http.HandleFunc("/", IndexHandler)
 	err = http.ListenAndServe(":8080", nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)

@@ -1,36 +1,37 @@
 package main
 
-// import (
-// 	"encoding/json"
-// 	"fmt"
-// 	"github.com/bradfitz/gomemcache/memcache"
-// 	"math/rand"
-// 	"time"
-// )
+import (
+	"encoding/json"
+	"math/rand"
+	"time"
+	//"fmt"
+	"github.com/bradfitz/gomemcache/memcache"
+	//"time"
+)
 
-// var mc = memcache.New("127.0.0.1:11211")
+var mc = memcache.New("10.133.133.26:11211")
 
-// func initSession() {
-// 	rand.Seed(time.Now().UnixNano())
-// }
+func initSession() {
+	rand.Seed(time.Now().UnixNano())
+}
 
-// func getSessionInfo(id string) (result map[string]string, err error) {
-// 	var item *memcache.Item
-// 	item, err = mc.Get("session_" + id)
-// 	if err != nil {
-// 		return
-// 	}
+func getSessionInfo(id string) (result map[string]string, err error) {
+	var item *memcache.Item
+	item, err = mc.Get("session_" + id)
+	if err != nil {
+		return
+	}
 
-// 	contents := item.Value
+	contents := item.Value
 
-// 	result = make(map[string]string)
-// 	err = json.Unmarshal(contents, &result)
-// 	if err != nil {
-// 		return
-// 	}
+	result = make(map[string]string)
+	err = json.Unmarshal(contents, &result)
+	if err != nil {
+		return
+	}
 
-// 	return
-// }
+	return
+}
 
 // // Create session with info and return session identifier or error
 // func createSession(info map[string]string) (id string, err error) {
