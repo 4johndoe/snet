@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/bradfitz/gomemcache/memcache"
+	"log"
 	"math/rand"
 	"time"
 )
@@ -18,6 +19,7 @@ func getSessionInfo(id string) (result map[string]string, err error) {
 	var item *memcache.Item
 	item, err = mc.Get("session_" + id)
 	if err != nil {
+		log.Println(err)
 		return
 	}
 
@@ -26,6 +28,7 @@ func getSessionInfo(id string) (result map[string]string, err error) {
 	result = make(map[string]string)
 	err = json.Unmarshal(contents, &result)
 	if err != nil {
+		log.Println(err)
 		return
 	}
 
@@ -37,6 +40,7 @@ func createSession(info map[string]string) (id string, err error) {
 	var contents []byte
 	contents, err = json.Marshal(info)
 	if err != nil {
+		log.Println(err)
 		return
 	}
 
@@ -45,6 +49,7 @@ func createSession(info map[string]string) (id string, err error) {
 
 	if err != nil {
 		id = ""
+		log.Println(err)
 		return
 	}
 
