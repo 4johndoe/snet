@@ -2,11 +2,10 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
+	"github.com/bradfitz/gomemcache/memcache"
 	"math/rand"
 	"time"
-	//"fmt"
-	"github.com/bradfitz/gomemcache/memcache"
-	//"time"
 )
 
 var mc = memcache.New("10.133.133.26:11211")
@@ -33,21 +32,21 @@ func getSessionInfo(id string) (result map[string]string, err error) {
 	return
 }
 
-// // Create session with info and return session identifier or error
-// func createSession(info map[string]string) (id string, err error) {
-// 	var contents []byte
-// 	contents, err = json.Marshal(info)
-// 	if err != nil {
-// 		return
-// 	}
+// Create session with info and return session identifier or error
+func createSession(info map[string]string) (id string, err error) {
+	var contents []byte
+	contents, err = json.Marshal(info)
+	if err != nil {
+		return
+	}
 
-// 	id = fmt.Sprint(rand.Int63())
-// 	err = mc.Set(&memcache.Item{Key: "session_" + id, Value: contents})
+	id = fmt.Sprint(rand.Int63())
+	err = mc.Set(&memcache.Item{Key: "session_" + id, Value: contents})
 
-// 	if err != nil {
-// 		id = ""
-// 		return
-// 	}
+	if err != nil {
+		id = ""
+		return
+	}
 
-// 	return
-// }
+	return
+}

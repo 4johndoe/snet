@@ -1,12 +1,16 @@
 package main
 
 import (
+	"crypto/md5"
+	"crypto/sha1"
+	"database/sql"
 	"fmt"
 	"io"
 	"os"
 	"strings"
+	"time"
 
-	//_ "github.com/go-sql-driver/mysql"
+	_ "github.com/go-sql-driver/mysql"
 	//"io"
 	"log"
 	"net/http"
@@ -96,14 +100,14 @@ import (
 //	}
 //)
 //
-//var (
-//	db              *sql.DB
-//	loginStmt       *sql.Stmt
-//	getMessagesStmt *sql.Stmt
-//	sendMessageStmt *sql.Stmt
-//
-//	eventsFlow = make(chan *ControlEvent, 200)
-//)
+var (
+	//db              *sql.DB
+	loginStmt       *sql.Stmt
+	getMessagesStmt *sql.Stmt
+	sendMessageStmt *sql.Stmt
+
+	//eventsFlow = make(chan *ControlEvent, 200)
+)
 
 func serveStatic(filename string, w http.ResponseWriter) {
 	fp, err := os.Open(filename)
@@ -127,65 +131,65 @@ func StaticServer(w http.ResponseWriter, req *http.Request) {
 	serveStatic(req.URL.Path[len("/"):], w)
 }
 
-//func LoginHandler(w http.ResponseWriter, req *http.Request) {
-//	req.ParseForm()
-//	email := req.Form.Get("email")
-//	userPassword := req.Form.Get("password")
-//
-//	if email == "" || userPassword == "" {
-//		fmt.Fprintf(w, "You must provide both email and password")
-//		return
-//	}
-//
-//	var id uint64
-//	var password, name string
-//
-//	err := loginStmt.QueryRow(email).Scan(&id, &password, &name)
-//	if err != nil {
-//		if err == sql.ErrNoRows {
-//			w.Write([]byte("You are not registered, sorry"))
-//		} else {
-//			w.Write([]byte("Error occured, sorry"))
-//			log.Println("Db error: " + err.Error())
-//		}
-//		return
-//	}
-//
-//	if passwordHash(userPassword) != password {
-//		w.Write([]byte("Incorrect password"))
-//		return
-//	}
-//
-//	sessionId, err := createSession(map[string]string{"id": fmt.Sprint(id), "name": name})
-//
-//	cookie := &http.Cookie{
-//		Name:    "id",
-//		Value:   string(sessionId),
-//		Path:    "/",
-//		Domain:  req.Header.Get("Host"),
-//		Expires: time.Now().Add(365 * 24 * time.Hour),
-//	}
-//
-//	http.SetCookie(w, cookie)
-//	w.Header().Add("Location", "/")
-//	w.WriteHeader(302)
-//}
-//
+func LoginHandler(w http.ResponseWriter, req *http.Request) {
+	req.ParseForm()
+	email := req.Form.Get("email")
+	userPassword := req.Form.Get("password")
+
+	if email == "" || userPassword == "" {
+		fmt.Fprintf(w, "You must provide both email and password")
+		return
+	}
+
+	var id uint64
+	var password, name string
+
+	err := loginStmt.QueryRow(email).Scan(&id, &password, &name)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			w.Write([]byte("You are not registered, sorry"))
+		} else {
+			w.Write([]byte("Error occured, sorry"))
+			log.Println("Db error: " + err.Error())
+		}
+		return
+	}
+
+	if passwordHash(userPassword) != password {
+		w.Write([]byte("Incorrect password"))
+		return
+	}
+
+	sessionId, err := createSession(map[string]string{"id": fmt.Sprint(id), "name": name})
+
+	cookie := &http.Cookie{
+		Name:    "id",
+		Value:   string(sessionId),
+		Path:    "/",
+		Domain:  req.Header.Get("Host"),
+		Expires: time.Now().Add(365 * 24 * time.Hour),
+	}
+
+	http.SetCookie(w, cookie)
+	w.Header().Add("Location", "/")
+	w.WriteHeader(302)
+}
+
 //func LogoutHandler(w http.ResponseWriter, req *http.Request) {
 //	http.SetCookie(w, &http.Cookie{Name: "id"})
 //	w.Header().Add("Location", "/")
 //	w.WriteHeader(302)
 //}
-//
-//func passwordHash(password string) string {
-//	sh := sha1.New()
-//	io.WriteString(sh, password)
-//
-//	md := md5.New()
-//	io.WriteString(md, password)
-//
-//	return fmt.Sprintf("%x:%x", sh.Sum(nil), md.Sum(nil))
-//}
+
+func passwordHash(password string) string {
+	sh := sha1.New()
+	io.WriteString(sh, password)
+
+	md := md5.New()
+	io.WriteString(md, password)
+
+	return fmt.Sprintf("%x:%x", sh.Sum(nil), md.Sum(nil))
+}
 
 func serveAuthPage(info map[string]string, w http.ResponseWriter) {
 	authTpl.Execute(w, info)
@@ -389,47 +393,46 @@ func init() {
 	initSession()
 }
 
-//func initStmts(db *sql.DB) {
-//	var err error
-//
-//	loginStmt, err = db.Prepare("SELECT id, password, name FROM User WHERE email = ?")
-//	if err != nil {
-//		log.Fatal("Could not prepare email select: " + err.Error())
-//	}
-//
-//	getMessagesStmt, err = db.Prepare(`SELECT id, message, UNIX_TIMESTAMP(ts)
-//		FROM Messages
-//		WHERE user_id = ? AND user_id_to = ? AND ts <= FROM_UNIXTIME(?)
-//		ORDER BY ts DESC
-//		LIMIT ?`)
-//	if err != nil {
-//		log.Fatal("Could not prepare messages select: " + err.Error())
-//	}
-//
-//	sendMessageStmt, err = db.Prepare(`INSERT INTO Messages
-//		(user_id, user_id_to, msg_type, message, ts)
-//		VALUES(?, ?, ?, ?, NOW())`)
-//	if err != nil {
-//		log.Fatal("Could not prepare messages select: " + err.Error())
-//	}
-//}
+func initStmts(db *sql.DB) {
+	var err error
+
+	loginStmt, err = db.Prepare("SELECT id, password, name FROM User WHERE email = ?")
+	if err != nil {
+		log.Fatal("Could not prepare email select: " + err.Error())
+	}
+
+	//getMessagesStmt, err = db.Prepare(`SELECT id, message, UNIX_TIMESTAMP(ts)
+	//	FROM Messages
+	//	WHERE user_id = ? AND user_id_to = ? AND ts <= FROM_UNIXTIME(?)
+	//	ORDER BY ts DESC
+	//	LIMIT ?`)
+	//if err != nil {
+	//	log.Fatal("Could not prepare messages select: " + err.Error())
+	//}
+	//
+	//sendMessageStmt, err = db.Prepare(`INSERT INTO Messages
+	//	(user_id, user_id_to, msg_type, message, ts)
+	//	VALUES(?, ?, ?, ?, NOW())`)
+	//if err != nil {
+	//	log.Fatal("Could not prepare messages select: " + err.Error())
+	//}
+}
 
 func main() {
 	var err error
 
-	//db, err := sql.Open("mysql", "root:exapmle@tcp(10.133.133.26:3306)/social")
-	//if err != nil {
-	//	log.Fatal("Could not connect to db: " + err.Error())
-	//}
-	//
-	//fmt.Sprintf("connected successfully to %d", db.Ping())
-	//initStmts(db)
-	//
+	db, err := sql.Open("mysql", "root:example@tcp(10.133.133.26:3306)/social")
+	if err != nil {
+		log.Fatal("Could not connect to db: " + err.Error())
+	}
+
+	initStmts(db)
+
 	//http.Handle("/events", websocket.Handler(EventsHandler))
 	//go EventsDispatcher()
 	//
 	http.HandleFunc("/static/", StaticServer)
-	//http.HandleFunc("/login", LoginHandler)
+	http.HandleFunc("/login", LoginHandler)
 	//http.HandleFunc("/logout", LogoutHandler)
 	http.HandleFunc("/", IndexHandler)
 	err = http.ListenAndServe(":8080", nil)
