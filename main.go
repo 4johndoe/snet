@@ -175,11 +175,11 @@ func LoginHandler(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(302)
 }
 
-//func LogoutHandler(w http.ResponseWriter, req *http.Request) {
-//	http.SetCookie(w, &http.Cookie{Name: "id"})
-//	w.Header().Add("Location", "/")
-//	w.WriteHeader(302)
-//}
+func LogoutHandler(w http.ResponseWriter, req *http.Request) {
+	http.SetCookie(w, &http.Cookie{Name: "id"})
+	w.Header().Add("Location", "/")
+	w.WriteHeader(302)
+}
 
 func passwordHash(password string) string {
 	sh := sha1.New()
@@ -433,7 +433,7 @@ func main() {
 	//
 	http.HandleFunc("/static/", StaticServer)
 	http.HandleFunc("/login", LoginHandler)
-	//http.HandleFunc("/logout", LogoutHandler)
+	http.HandleFunc("/logout", LogoutHandler)
 	http.HandleFunc("/", IndexHandler)
 	err = http.ListenAndServe(":8080", nil)
 	if err != nil {
